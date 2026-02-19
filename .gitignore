@@ -1,5 +1,7 @@
 #mcp_server
 .vscode/mcp.json
+packages/core/src/tools/concurrency_test.ts
+
 .pnpm-store
 dist
 out
