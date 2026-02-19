@@ -21,6 +21,7 @@ export type ToolError =
 	| "INTENT_IGNORED"
 	| "FILE_WRITE_ERROR"
 	| "STALE_FILE" // Phase 4: Concurrency error
+	| "SYNTAX_ERROR" // NEW: The Governor caught broken code
 
 //export type ToolError = "INVALID_INTENT" | "SCOPE_VIOLATION" | "USER_REJECTED" | "INTENT_IGNORED" | "FILE_WRITE_ERROR"
 

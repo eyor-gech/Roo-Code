@@ -1,6 +1,10 @@
 #mcp_server
 .vscode/mcp.json
+
+# Logs
 packages/core/src/tools/concurrency_test.ts
+packages/core/src/tools/governor_test.ts
+
 
 .pnpm-store
 dist
