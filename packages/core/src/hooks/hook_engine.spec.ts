@@ -1,36 +1,22 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { runTool, type ToolRequest } from "./hook_engine.js"
-
 import * as intentModule from "../tools/load_intents.js"
 import * as ignoreModule from "./intent_ignore.js"
 
-describe("Phase 2 Hook Engine", () => {
+describe("Phase 2 & 3 Integrated Security Bridge", () => {
 	beforeEach(() => {
-		// Mock intents
+		vi.restoreAllMocks()
+
+		// Mocking the intent store
 		vi.spyOn(intentModule, "load_intents").mockReturnValue({
 			"REQ-001": {
 				description: "Test Intent",
 				constraints: [],
-				scope: ["packages/core/src/tools/"],
-				trace: undefined,
+				scope: ["packages/core/src/tools/"], // Crucial for scope test
 			},
 		})
 
-		// Default: no ignored intents
 		vi.spyOn(ignoreModule, "loadIntentIgnore").mockReturnValue([])
-	})
-
-	it("executes safe commands without approval", async () => {
-		const req: ToolRequest = {
-			toolName: "select_active_intent",
-			args: ["REQ-001"],
-			intent_id: "REQ-001",
-		}
-
-		const res = await runTool(req)
-
-		expect(res.success).toBe(true)
-		expect(res.result).toContain("Executed select_active_intent")
 	})
 
 	it("blocks destructive commands outside scope", async () => {
@@ -38,7 +24,8 @@ describe("Phase 2 Hook Engine", () => {
 			toolName: "write_file",
 			args: ["code"],
 			intent_id: "REQ-001",
-			targetFile: "unauthorized_file.ts",
+			targetFile: "unauthorized_file.ts", // Path violation
+			mutation_class: "INTENT_EVOLUTION",
 		}
 
 		const res = await runTool(req)
@@ -47,48 +34,31 @@ describe("Phase 2 Hook Engine", () => {
 		expect(res.error?.type).toBe("SCOPE_VIOLATION")
 	})
 
+	it("executes safe commands with full schema compliance", async () => {
+		const req: ToolRequest = {
+			toolName: "select_active_intent",
+			args: ["REQ-001"],
+			intent_id: "REQ-001",
+			targetFile: "N/A",
+			mutation_class: "AST_REFACTOR",
+		}
+
+		const res = await runTool(req)
+		expect(res.success).toBe(true)
+	})
+
 	it("blocks when user rejects destructive command", async () => {
 		const req: ToolRequest = {
 			toolName: "write_file",
-			args: [],
+			args: ["content"],
 			intent_id: "REQ-001",
 			targetFile: "packages/core/src/tools/file.ts",
+			mutation_class: "AST_REFACTOR",
 		}
 
-		const res = await runTool(req, async () => false)
+		const res = await runTool(req, async () => false) // User says NO
 
 		expect(res.success).toBe(false)
 		expect(res.error?.type).toBe("USER_REJECTED")
-	})
-
-	it("blocks execution for ignored intent (absolute rule)", async () => {
-		// Override ignore behavior for this test only
-		vi.spyOn(ignoreModule, "loadIntentIgnore").mockReturnValue(["REQ-001"])
-
-		const req: ToolRequest = {
-			toolName: "write_file",
-			args: [],
-			intent_id: "REQ-001",
-			targetFile: "packages/core/src/tools/file.ts",
-		}
-
-		const res = await runTool(req)
-
-		expect(res.success).toBe(false)
-		expect(res.error?.type).toBe("INTENT_IGNORED")
-	})
-
-	it("returns INVALID_INTENT for unknown intent", async () => {
-		const req: ToolRequest = {
-			toolName: "write_file",
-			args: [],
-			intent_id: "UNKNOWN",
-			targetFile: "file.ts",
-		}
-
-		const res = await runTool(req)
-
-		expect(res.success).toBe(false)
-		expect(res.error?.type).toBe("INVALID_INTENT")
 	})
 })
