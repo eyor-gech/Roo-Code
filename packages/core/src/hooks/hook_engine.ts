@@ -10,9 +10,19 @@ export type ToolRequest = {
 	intent_id: string
 	targetFile: string // Mandatory for Phase 3
 	mutation_class: MutationClass // Mandatory for Phase 3
+	base_hash?: string // The hash, the agent READ before starting its turn
 }
 
-export type ToolError = "INVALID_INTENT" | "SCOPE_VIOLATION" | "USER_REJECTED" | "INTENT_IGNORED" | "FILE_WRITE_ERROR"
+// Added STALE_FILE to the union
+export type ToolError =
+	| "INVALID_INTENT"
+	| "SCOPE_VIOLATION"
+	| "USER_REJECTED"
+	| "INTENT_IGNORED"
+	| "FILE_WRITE_ERROR"
+	| "STALE_FILE" // Phase 4: Concurrency error
+
+//export type ToolError = "INVALID_INTENT" | "SCOPE_VIOLATION" | "USER_REJECTED" | "INTENT_IGNORED" | "FILE_WRITE_ERROR"
 
 export type ToolResponse =
 	| { success: true; result: string; error?: never }

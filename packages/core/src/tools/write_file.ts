@@ -13,6 +13,27 @@ export async function write_file(request: WriteFileRequest): Promise<ToolRespons
 			? request.targetFile
 			: path.resolve(process.cwd(), request.targetFile)
 
+		// --- PHASE 4: CONCURRENCY CONTROL (Optimistic Locking) ---
+		if (fs.existsSync(targetPath)) {
+			const currentDiskContent = fs.readFileSync(targetPath, "utf-8")
+			const actualDiskHash = sha256(currentDiskContent)
+
+			// If the agent provides a base_hash, it MUST match the disk
+			if (request.base_hash && request.base_hash !== actualDiskHash) {
+				return {
+					success: false,
+					error: {
+						type: "STALE_FILE",
+						intent_id: request.intent_id,
+						target: request.targetFile,
+						message:
+							"Optimistic Locking Failure: The file has been modified by another process since you last read it. Re-read the file to sync.",
+					},
+				}
+			}
+		}
+		// ---------------------------------------------------------
+
 		const content = typeof request.args[0] === "string" ? request.args[0] : JSON.stringify(request.args[0], null, 2)
 
 		fs.mkdirSync(path.dirname(targetPath), { recursive: true })
@@ -29,6 +50,8 @@ export async function write_file(request: WriteFileRequest): Promise<ToolRespons
 				target: request.targetFile,
 				content_hash: contentHash,
 			},
+			// Logic for Phase 4: Record what version we built upon
+			predecessor_hash: request.base_hash || null,
 		}
 
 		fs.appendFileSync(TRACE_FILE, JSON.stringify(traceEntry) + "\n")
