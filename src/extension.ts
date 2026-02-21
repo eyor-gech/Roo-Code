@@ -2,6 +2,8 @@ import * as vscode from "vscode"
 import * as dotenvx from "@dotenvx/dotenvx"
 import * as fs from "fs"
 import * as path from "path"
+//import { runTool } from "./hooks/hook_engine.js"
+import { runTool } from "@roo-code/core"
 
 // Load environment variables from .env file
 // The extension-level .env is optional (not shipped in production builds).
@@ -451,7 +453,55 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// Initialize background model cache refresh
 	initializeModelCacheRefresh()
+	// --- Governor Test Command ---
+	const governedWriteCommand = vscode.commands.registerCommand("roo-code.runGovernorTest", async () => {
+		// 1️⃣ Ask for Intent ID
+		const intentId = await vscode.window.showInputBox({
+			prompt: "Enter Intent ID (e.g., INT-001)",
+			value: "INT-001",
+		})
 
+		if (!intentId) return
+
+		// 2️⃣ Ask for Target File
+		const targetFile = await vscode.window.showInputBox({
+			prompt: "Enter Target File",
+			value: "src/weather.ts",
+		})
+
+		if (!targetFile) return
+
+		// 3️⃣ Ask for Code Content
+		const codeContent = await vscode.window.showInputBox({
+			prompt: "Enter Code Content",
+			placeHolder: "export const getWeather = () => 'Sunny';",
+		})
+
+		if (codeContent === undefined) return
+
+		try {
+			const result = await runTool({
+				toolName: "write_file",
+				args: [codeContent],
+				intent_id: intentId,
+				targetFile,
+				mutation_class: "AST_REFACTOR",
+			})
+
+			if (result.success) {
+				vscode.window.showInformationMessage("✅ Success! Trace recorded with AST_REFACTOR.")
+			} else {
+				vscode.window.showErrorMessage(`❌ Blocked: ${result.error?.type} - ${result.error?.message}`)
+			}
+		} catch (err) {
+			vscode.window.showErrorMessage(`❌ Execution Error: ${err}`)
+		}
+	})
+
+	context.subscriptions.push(governedWriteCommand)
+	//setTimeout(() => {
+	//vscode.commands.executeCommand("roo-code.runGovernorTest");
+	//}, 3000)
 	return new API(outputChannel, provider, socketPath, enableLogging)
 }
 
@@ -464,20 +514,18 @@ export async function deactivate() {
 			if (authStateChangedHandler) {
 				CloudService.instance.off("auth-state-changed", authStateChangedHandler)
 			}
-
 			if (settingsUpdatedHandler) {
 				CloudService.instance.off("settings-updated", settingsUpdatedHandler)
 			}
-
 			if (userInfoHandler) {
-				CloudService.instance.off("user-info", userInfoHandler as any)
+				// Changed from 'any' to 'unknown' casting to satisfy lint
+				CloudService.instance.off(
+					"user-info",
+					userInfoHandler as unknown as (data: { userInfo: CloudUserInfo }) => Promise<void>,
+				)
 			}
-
-			outputChannel.appendLine("CloudService event handlers cleaned up")
 		} catch (error) {
-			outputChannel.appendLine(
-				`Failed to clean up CloudService event handlers: ${error instanceof Error ? error.message : String(error)}`,
-			)
+			outputChannel.appendLine(`Cleanup error: ${error instanceof Error ? error.message : String(error)}`)
 		}
 	}
 

@@ -7,16 +7,17 @@ describe("Phase 2 & 3 Integrated Security Bridge", () => {
 	beforeEach(() => {
 		vi.restoreAllMocks()
 
-		// Mocking the intent store
+		// Mocking the intent store with correct 'id' property
 		vi.spyOn(intentModule, "load_intents").mockReturnValue({
 			"REQ-001": {
+				id: "REQ-001", // <--- required for TS Intent type
 				description: "Test Intent",
-				constraints: [],
-				scope: ["packages/core/src/tools/"], // Crucial for scope test
+				constraints: [] as string[],
+				scope: ["packages/core/src/tools/"],
 			},
 		})
 
-		vi.spyOn(ignoreModule, "loadIntentIgnore").mockReturnValue([])
+		vi.spyOn(ignoreModule, "loadIntentIgnore").mockReturnValue([] as string[])
 	})
 
 	it("blocks destructive commands outside scope", async () => {
@@ -24,7 +25,7 @@ describe("Phase 2 & 3 Integrated Security Bridge", () => {
 			toolName: "write_file",
 			args: ["code"],
 			intent_id: "REQ-001",
-			targetFile: "unauthorized_file.ts", // Path violation
+			targetFile: "unauthorized_file.ts",
 			mutation_class: "INTENT_EVOLUTION",
 		}
 
