@@ -1,0 +1,8 @@
+active_intents:
+  - id: "CHI-001"
+    name: "Implement Trend Fetching Skill"
+    status: "IN_PROGRESS"
+    description: "Developing the stateless skill_fetch_trends.py based on SDD specs."
+    owned_scope:
+      - "skills/"
+      - "tests/"
