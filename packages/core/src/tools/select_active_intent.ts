@@ -2,6 +2,7 @@ import { load_intents } from "./load_intents.js"
 
 // Intent type
 export type Intent = {
+	id: string
 	description: string
 	constraints: string[]
 	scope: string[]
@@ -18,8 +19,9 @@ function escapeXml(str: string) {
 
 // Returns intent info as XML
 export function select_active_intent(intent_id: string): string {
-	const intents = load_intents()
+	const intents = load_intents() as Record<string, Intent>
 	const intent = intents[intent_id]
+
 	if (!intent) throw new Error("Invalid intent_id")
 
 	return `<intent_context>
@@ -30,9 +32,9 @@ export function select_active_intent(intent_id: string): string {
 }
 
 // Returns the trace info for a given intent, or undefined if none
-export function get_intent_trace(intent_id: string): Intent["trace"] {
-	const intents = load_intents()
+export function get_intent_trace(intent_id: string): Intent["trace"] | undefined {
+	const intents = load_intents() as Record<string, Intent>
 	const intent = intents[intent_id]
-	if (!intent) throw new Error("Invalid intent_id")
+	if (!intent) return undefined
 	return intent.trace
 }
