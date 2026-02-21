@@ -1,5 +1,5 @@
 {
-	"REQ-001": {
+	"INT-001": {
 		"description": "Initialize MCP server",
 		"constraints": ["do not write code immediately"],
 		"scope": ["packages/core/src/tools/"],
@@ -8,7 +8,7 @@
 			"functions": ["initializeServer"]
 		}
 	},
-	"REQ-002": {
+	"INT-002": {
 		"description": "Set up AI-Native IDE",
 		"constraints": ["analyze user request first"],
 		"scope": ["packages/core/src/ide/"]

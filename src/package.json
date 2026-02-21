@@ -47,7 +47,8 @@
 	],
 	"activationEvents": [
 		"onLanguage",
-		"onStartupFinished"
+		"onStartupFinished",
+		"onCommand:roo-code.runGovernorTest"
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
@@ -70,6 +71,11 @@
 			]
 		},
 		"commands": [
+			{
+				"command": "roo-code.runGovernorTest",
+				"title": "Roo Code: Run Governor Test",
+				"category": "Roo Code"
+			},
 			{
 				"command": "roo-cline.plusButtonClicked",
 				"title": "%command.newTask.title%",
